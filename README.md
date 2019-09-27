@@ -1,3 +1,6 @@
+Repo is based on the https://github.com/cybertronai/imagenet18
+
+
 Code to reproduce ImageNet in 18 minutes, by Andrew Shaw, Yaroslav Bulatov, and Jeremy Howard. High-level overview of techniques used is [here](http://fast.ai/2018/08/10/fastai-diu-imagenet/)
 
 
@@ -70,4 +73,3 @@ Runs will show up under under "imagenet18" project in your Weights and Biases pa
 
 # Other notes
 If you run locally, you may need to download imagenet yourself from [here](https://s3.amazonaws.com/yaroslavvb2/data/imagenet18.tar)
-
