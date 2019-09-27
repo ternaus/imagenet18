@@ -64,7 +64,7 @@ def main():
     if not args.delete:
         snapshots = list(ec2.snapshots.filter(Filters=[{"Name": "description", "Values": [args.snapshot]}]))
 
-        if len(snapshots) <= 0:
+        if not snapshots:
             raise ValueError(f"no snapshot matching {args.snapshot}")
 
         if len(snapshots) >= 2:

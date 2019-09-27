@@ -29,7 +29,7 @@ def get_events(fname, x_axis="step"):
             elif x_axis == "time":
                 x_val = event.wall_time
             else:
-                assert False, f"Unknown x_axis ({x_axis})"
+                raise ValueError(f"Unknown x_axis ({x_axis})")
 
             vals = {val.tag: val.simple_value for val in event.summary.value}
             # step_time: value
@@ -50,8 +50,14 @@ def get_events(fname, x_axis="step"):
 
 def datetime_from_seconds(seconds, timezone="US/Pacific"):
     """
-  timezone: pytz timezone name to use for conversion, ie, UTC or US/Pacific
-  """
+
+    Args:
+        seconds:
+        timezone: pytz timezone name to use for conversion, ie, UTC or US/Pacific
+
+    Returns:
+
+    """
     return dt.datetime.fromtimestamp(seconds, pytz.timezone(timezone))
 
 

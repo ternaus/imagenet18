@@ -114,7 +114,7 @@ def setup_mpi(job, skip_ssh_setup=False) -> Tuple[str, str]:
         keys = {}
         for task1 in job.tasks:
             task1.run('echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config', sudo=True, non_blocking=True)
-            for j, task2_ in enumerate(job.tasks):
+            for j in range(len(job.tasks)):
                 #  task1 ->ssh-> task2
                 #  task2.run(f'echo "{public_keys[task1]}" >> ~/.ssh/authorized_keys',
                 #         non_blocking=True)

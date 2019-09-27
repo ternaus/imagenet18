@@ -1,6 +1,6 @@
 # Prepares DAWN TSV file from TensorBoard events url
 
-import urllib
+import urllib.request
 import datetime as dt
 import pytz
 from tensorflow.python.summary import summary_iterator
@@ -43,8 +43,7 @@ def get_events(fname, x_axis="step"):
                     print(f"new val={vals[tag]}")
 
                 event_dict[x_val] = vals[tag]
-    except Exception as e:
-        print(e)
+    except ValueError:
         pass
 
     return result
@@ -59,13 +58,12 @@ def datetime_from_seconds(seconds, timezone="US/Pacific"):
 
 def download_file(url):
     if url.lower().startswith("http"):
-        req = urllib.Request.request(url)
+        req = urllib.request.urlopen(url)
     else:
         raise ValueError from None
 
-    with urllib.request.urlopen(req) as resp:
-        data = resp.read()
-        return data
+    data = req.read()
+    return data
 
 
 def main():
