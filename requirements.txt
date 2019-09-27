@@ -9,5 +9,5 @@ tqdm
 tensorboardX
 torch
 wandb
-black
+ec2-metadata
 flake8
