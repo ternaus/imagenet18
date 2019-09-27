@@ -8,13 +8,15 @@ import subprocess
 import threading
 from typing import Tuple
 from requests.exceptions import ConnectTimeout
+import wandb
+import torch
 
 
 def is_set(name: str) -> bool:
     """Helper method to check if given property is set, anything except missing, 0 and false means set """
 
     val = os.environ.get(name, "0").lower()
-    return not (val == "0" or val == "false")
+    return val not in ["0", "false"]
 
 
 def extract_ec2_metadata():
@@ -43,9 +45,6 @@ def random_id(k=3):
 
 def log_environment():
     """Logs AWS local machine environment to wandb config."""
-    import os
-    import wandb
-    import torch
 
     if not (hasattr(wandb, "config") and wandb.config is not None):
         return
@@ -61,7 +60,7 @@ def log_environment():
 def ossystem(cmd, shell=True):
     """Like os.system, but returns output of command as string."""
     p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    (stdout, stderr) = p.communicate()
+    (stdout, unused_stderr) = p.communicate()
     return stdout.decode("ascii")
 
 
@@ -113,7 +112,7 @@ def setup_mpi(job, skip_ssh_setup=False) -> Tuple[str, str]:
             public_keys[task] = task.read(key_fn + ".pub")
 
         keys = {}
-        for i, task1 in enumerate(job.tasks):
+        for task1 in job.tasks:
             task1.run('echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config', sudo=True, non_blocking=True)
             for j, task2_ in enumerate(job.tasks):
                 #  task1 ->ssh-> task2

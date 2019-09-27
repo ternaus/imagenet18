@@ -23,9 +23,14 @@ import training.resnet as resnet
 from pprint import pprint as pp
 
 import util
-from .fp16util import network_to_half, prep_param_lists, model_grads_to_master_grads, master_params_to_model_params
-from .logger import TensorboardLogger, FileLogger
-from .meter import AverageMeter, NetworkMeter, TimeMeter
+from training.fp16util import (
+    network_to_half,
+    prep_param_lists,
+    model_grads_to_master_grads,
+    master_params_to_model_params,
+)
+from training.logger import TensorboardLogger, FileLogger
+from training.meter import AverageMeter, NetworkMeter, TimeMeter
 
 import wandb
 
@@ -153,7 +158,8 @@ if hasattr(wandb, "config") and wandb.config is not None:
     wandb.config["gpus"] = int(os.environ.get("WORLD_SIZE", 1))
 
 try:
-    config = util.text_unpickle(open(args.internal_config_fn).read())
+    with open(args.internal_config_fn) as f:
+        config = util.text_unpickle(f)
 except Exception as e:
     log.console(f"couldnt open wandb config file with {e}")
     config = {}

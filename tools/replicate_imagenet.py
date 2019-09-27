@@ -64,8 +64,12 @@ def main():
     if not args.delete:
         snapshots = list(ec2.snapshots.filter(Filters=[{"Name": "description", "Values": [args.snapshot]}]))
 
-        assert len(snapshots) > 0, f"no snapshot matching {args.snapshot}"
-        assert len(snapshots) < 2, f"multiple snapshots matching {args.snapshot}"
+        if len(snapshots) <= 0:
+            raise ValueError(f"no snapshot matching {args.snapshot}")
+
+        if len(snapshots) >= 2:
+            raise ValueError(f"multiple snapshots matching {args.snapshot}")
+
         snap = snapshots[0]
         if not args.size_gb:
             args.size_gb = snap.volume_size
@@ -87,7 +91,7 @@ def main():
             else:
                 try:
                     vols[vol_name].delete()
-                except Exception as e:
+                except ValueError as e:
                     print(f"Deletion of {vol_name} failed with {e}")
             continue
 
