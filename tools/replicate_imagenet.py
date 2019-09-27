@@ -1,31 +1,33 @@
 #!/usr/bin/env python
 
-# Downloads imagenet and replicates it across multiple disks
-#
-# Script to initialize a set of high-performance volumes with ImageNet data
-#
-# replicate_imagenet.py --replicas 8
-# replicate_imagenet.py --replicas 8 --volume-offset=8
-#
-# or
-#
-# replicate_imagenet.py --replicas 16 --zone=us-east-1b
-# Creates volumes: imagenet_00, imagenet_01, imagenet_02, ..., imagenet_15
-#
-# ImageNet data should follow structure as in
-# https://github.com/diux-dev/cluster/tree/master/pytorch#data-preparation
-# (paths replace ~/data with /)
-#
-# steps to create snapshot:
-# create blank volume (ec2.create_volume())
-# attach it to an existing instance with ImageNet under data, then
-# sudo mkfs -t ext4 /dev/xvdf
-# mkdir data
-# sudo mount /dev/xvdf data
-# sudo chown data `whoami`
-# cp -R data0 data
-# snapshot = ec2.create_snapshot(Description=f'{u.get_name(vol)} snapshot',
-# VolumeId=vol.id,)
+"""
+Downloads imagenet and replicates it across multiple disks
+
+Script to initialize a set of high-performance volumes with ImageNet data
+
+replicate_imagenet.py --replicas 8
+replicate_imagenet.py --replicas 8 --volume-offset=8
+
+or
+
+replicate_imagenet.py --replicas 16 --zone=us-east-1b
+Creates volumes: imagenet_00, imagenet_01, imagenet_02, ..., imagenet_15
+
+ImageNet data should follow structure as in
+https://github.com/diux-dev/cluster/tree/master/pytorch#data-preparation
+(paths replace ~/data with /)
+
+steps to create snapshot:
+create blank volume (ec2.create_volume())
+attach it to an existing instance with ImageNet under data, then
+sudo mkfs -t ext4 /dev/xvdf
+mkdir data
+sudo mount /dev/xvdf data
+sudo chown data `whoami`
+cp -R data0 data
+snapshot = ec2.create_snapshot(Description=f'{u.get_name(vol)} snapshot',
+VolumeId=vol.id,)
+"""
 
 import argparse
 
