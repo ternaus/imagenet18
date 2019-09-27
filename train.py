@@ -330,9 +330,10 @@ def main():
     EFA_HOME = f"/opt/amazon/efa"
     MPI_HOME = EFA_HOME
     NPROC_PER_NODE = args.nproc_per_node
-    assert (
-        NPROC_PER_NODE <= task0.num_gpus
-    ), f"requested {NPROC_PER_NODE} processes, but only {task0.num_gpus} gpus present"
+
+    if NPROC_PER_NODE > task0.num_gpus:
+        raise ValueError(f"requested {NPROC_PER_NODE} processes, but only {task0.num_gpus} gpus present")
+
     NUM_GPUS = NPROC_PER_NODE * args.num_tasks
 
     config["NUM_GPUS"] = NUM_GPUS
@@ -355,7 +356,7 @@ def main():
 
     if args.mount_imagenet:
         if not u.get_zone():
-            assert ValueError("Must specify zone when reusing EBS volumes")
+            raise ValueError("Must specify zone when reusing EBS volumes")
 
         mount_imagenet(job)
 
@@ -377,7 +378,7 @@ def main():
         if "efa" not in args.image_name:
             raise ValueError("make sure we use EFA-enabled image")
 
-        hosts_str, hosts_file_str = util.setup_mpi(job, skip_ssh_setup=args.skip_setup)
+        unused_hosts_str, hosts_file_str = util.setup_mpi(job, skip_ssh_setup=args.skip_setup)
         if not args.skip_setup:
             task0.write(HOSTS_SLOTS_FN, hosts_file_str)
 

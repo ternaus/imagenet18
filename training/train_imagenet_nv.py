@@ -161,7 +161,7 @@ if hasattr(wandb, "config") and wandb.config is not None:
 try:
     with open(args.internal_config_fn) as f:
         config = util.text_unpickle(f)
-except Exception as e:
+except ValueError as e:
     log.console(f"couldnt open wandb config file with {e}")
     config = {}
 

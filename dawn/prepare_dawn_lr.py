@@ -60,8 +60,8 @@ def download_file(url):
         with urllib.request.urlopen(url) as response:
             data = response.read()
         return data
-    else:
-        raise ValueError from None
+
+    raise ValueError from None
 
 
 def main():
