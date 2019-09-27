@@ -9,3 +9,5 @@ tqdm
 tensorboardX
 torch
 wandb
+black
+flake8
