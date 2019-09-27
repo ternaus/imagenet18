@@ -20,7 +20,11 @@ def is_set(name: str) -> bool:
 
 
 def extract_ec2_metadata():
-    """Returns dictionary of common ec2 metadata"""
+    """Returns dictionary of common ec2 metadata.
+
+    Returns:
+
+    """
     from ec2_metadata import ec2_metadata
 
     try:
@@ -58,14 +62,29 @@ def log_environment():
 
 
 def ossystem(cmd, shell=True):
-    """Like os.system, but returns output of command as string."""
+    """Like os.system, but returns output of command as string.
+
+    Args:
+        cmd:
+        shell:
+
+    Returns:
+
+    """
     p = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     (stdout, unused_stderr) = p.communicate()
     return stdout.decode("ascii")
 
 
 def text_pickle(obj) -> str:
-    """Pickles object into character string"""
+    """Pickles object into character string.
+
+    Args:
+        obj:
+
+    Returns:
+
+    """
     pickle_string = pickle.dumps(obj)
     pickle_string_encoded: bytes = base64.b64encode(pickle_string)
     s = pickle_string_encoded.decode("ascii")
@@ -73,7 +92,14 @@ def text_pickle(obj) -> str:
 
 
 def text_unpickle(pickle_string_encoded: str):
-    """Unpickles character string"""
+    """Unpickles character string.
+
+    Args:
+        pickle_string_encoded:
+
+    Returns:
+
+    """
     if not pickle_string_encoded:
         return None
     obj = pickle.loads(base64.b64decode(pickle_string_encoded))
@@ -88,21 +114,41 @@ def format_env(**d):
 
 
 def format_env_export(**d):
-    """Converts env var values into variable string, ie
-        'export var1="val1" && export var2="val2" '"""
+    """Converts env var values into variable string, ie 'export var1="val1" && export var2="val2" '
+
+    Args:
+        **d:
+
+    Returns:
+
+    """
     args_ = [f'export {key}="{d[key]}" ' for key in d]
     return " && ".join(args_)
 
 
 def format_env_x(**d):
-    """Converts env var values into format suitable for mpirun, ie
-        '-x var1="val1" -x var2="val2" '"""
+    """Converts env var values into format suitable for mpirun, ie '-x var1="val1" -x var2="val2" '
+
+    Args:
+        **d:
+
+    Returns:
+
+    """
     args_ = [f'-x {key}="{d[key]}" ' for key in sorted(d)]
     return "".join(args_)
 
 
 def setup_mpi(job, skip_ssh_setup=False) -> Tuple[str, str]:
-    """Sets up passwordless SSH between all tasks in the job."""
+    """Sets up passwordless SSH between all tasks in the job.
+
+    Args:
+        job:
+        skip_ssh_setup:
+
+    Returns:
+
+    """
     public_keys = {}
     if not skip_ssh_setup:
         for task in job.tasks:

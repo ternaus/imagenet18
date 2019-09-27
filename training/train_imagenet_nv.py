@@ -19,6 +19,7 @@ import training.dataloader as dataloader
 import training.dist_utils as dist_utils
 import training.experimental_utils as experimental_utils
 import training.resnet as resnet
+import traceback
 
 from pprint import pprint as pp
 
@@ -175,7 +176,8 @@ def main():
     log.console(args)
     tb.log("sizes/world", dist_utils.env_world_size())
 
-    assert os.path.exists(args.data)
+    if not os.path.exists(args.data):
+        raise FileNotFoundError()
 
     # need to index validation directory before we start counting the time
     dataloader.sort_ar(args.data + "/validation")
@@ -186,7 +188,10 @@ def main():
         dist.init_process_group(
             backend=args.dist_backend, init_method=args.dist_url, world_size=dist_utils.env_world_size()
         )
-        assert dist_utils.env_world_size() == dist.get_world_size()
+
+        if not dist_utils.env_world_size() == dist.get_world_size():
+            raise ValueError()
+
         # todo(y): use global_rank instead of local_rank here
         log.console("Distributed: success (%d/%d)" % (args.local_rank, dist.get_world_size()))
 
@@ -490,7 +495,9 @@ class Scheduler:
         phase["ep"] = listify(phase["ep"])
         phase["lr"] = listify(phase["lr"])
         if len(phase["lr"]) == 2:
-            assert len(phase["ep"]) == 2, "Linear learning rates must contain end epoch"
+            if len(phase["ep"]) != 2:
+                raise ValueError("Linear learning rates must contain end epoch")
+
         return phase
 
     def linear_phase_lr(self, phase, epoch, batch_curr, batch_tot):
@@ -512,7 +519,7 @@ class Scheduler:
         for phase in reversed(self.phases):
             if epoch >= phase["ep"][0]:
                 return phase
-        raise Exception("Epoch out of range")
+        raise ValueError("Epoch out of range")
 
     def get_lr(self, epoch, batch_curr, batch_tot):
         phase = self.get_current_phase(epoch)
@@ -598,9 +605,8 @@ if __name__ == "__main__":
             main()
         if not args.skip_auto_shutdown:
             os.system(f"sudo shutdown -h -P +{args.auto_shutdown_success_delay_mins}")
-    except Exception as e:
+    except ValueError as e:
         exc_type, exc_value, exc_traceback = sys.exc_info()
-        import traceback
 
         traceback.print_tb(exc_traceback, file=sys.stdout)
         print(str(e))

@@ -168,7 +168,9 @@ def get_nccl_rings(num_tasks, num_gpus):
     rotated_gpu_order = [3, 2, 1, 0, 7, 6, 5, 4]
     skip_gpu_order = get_skip_order(num_gpus)
     if (num_tasks >= 4) and (num_gpus == 8):
-        assert (num_tasks % 4) == 0
+        if num_tasks % 4 != 0:
+            raise ValueError()
+
         skip_machine_order = get_skip_order(num_tasks)
         ring_skip = build_ring_order(skip_machine_order, rotated_gpu_order)
         ring_skip_rev = build_ring_order(reversed(skip_machine_order), skip_gpu_order)
@@ -196,10 +198,10 @@ def get_skip_order(size):
 
 
 def format_params(arg):
-    if isinstance(arg, list) or isinstance(arg, dict):
+    if isinstance(arg, (list, dict)):
         return '"' + str(arg) + '"'
-    else:
-        return str(arg)
+
+    return str(arg)
 
 
 def create_volume_tags(name):
@@ -222,10 +224,12 @@ def mount_imagenet(job: ncluster.aws_backend.Job):
 
     attach_attempted = False
     for i, t in enumerate(job.tasks):
-        vol_name = f"imagenet_{zone[-2:]}_{i+args.offset:02d}"
-        assert (
-            vol_name in vols
-        ), f"Volume {vol_name} not found, set your NCLUSTER_ZONE={zone} and run replicate_imagenet.py"
+        vol_name = f"imagenet_{zone[-2:]}_{i + args.offset:02d}"
+        if vol_name not in vols:
+            raise ValueError(
+                f"Volume {vol_name} not found, set your NCLUSTER_ZONE={zone} and run replicate_imagenet.py"
+            )
+
         vol = vols[vol_name]
         print(f"Attaching {vol_name} to {t.name}")
         if vol.attachments:
@@ -250,10 +254,11 @@ def mount_imagenet(job: ncluster.aws_backend.Job):
     if attach_attempted:
         time.sleep(2)  # wait for attachment to succeed
         i = 0
-        vol_name = f"imagenet_{zone[-2:]}_{i+args.offset:02d}"
+        vol_name = f"imagenet_{zone[-2:]}_{i + args.offset:02d}"
         vol = vols[vol_name]
         vol.reload()
-        assert vol.attachments[0]["InstanceId"] == job.tasks[0].instance.id
+        if not vol.attachments[0]["InstanceId"] == job.tasks[0].instance.id:
+            raise ValueError()
 
     def strip_dev(d):
         return d[len("/dev/") :]
@@ -266,9 +271,11 @@ def mount_imagenet(job: ncluster.aws_backend.Job):
         lsblk_output = task0.run("lsblk", return_output=True)
         if strip_dev(DEFAULT_UNIX_DEVICE) not in lsblk_output:
             actual_device = "/dev/nvme3n1"
-            assert strip_dev(actual_device) in lsblk_output, (
-                f"Hack for p3dn failed, {actual_device} not found, " f"available devices '{lsblk_output}'"
-            )
+
+            if not strip_dev(actual_device) in lsblk_output:
+                raise ValueError(
+                    f"Hack for p3dn failed, {actual_device} not found, " f" available devices '{lsblk_output}'"
+                )
 
         job.run(f"sudo mkdir -p /data && sudo chown `whoami` /data && sudo mount {actual_device} /data")
     while "/data" not in task0.run("df", return_output=True):
@@ -279,11 +286,15 @@ def mount_imagenet(job: ncluster.aws_backend.Job):
 def main():
     if args.image_name == "pytorch.imagenet.source.v7":
         supported_regions = ["us-west-2", "us-east-1", "us-east-2"]
-        assert ncluster.get_region() in supported_regions, (
-            f"required AMI {args.image_name} has only been made available in regions {supported_regions}, "
-            f"but your current region is {ncluster.get_region()} (set $AWS_DEFAULT_REGION)"
-        )
-    assert args.machines in schedules, f"{args.machines} not supported, only support {schedules.keys()}"
+        if ncluster.get_region() not in supported_regions:
+            raise ValueError(
+                f"required AMI {args.image_name} has only been made available "
+                f"in regions {supported_regions}, but your current region "
+                f"is {ncluster.get_region()} (set $AWS_DEFAULT_REGION)"
+            )
+
+        if args.machines not in schedules:
+            raise ValueError(f"{args.machines} not supported, only support {schedules.keys()}")
 
     if args.mount_imagenet:
         datadir = "/data/imagenet"
@@ -292,9 +303,8 @@ def main():
         os.environ["NCLUSTER_AWS_FAST_ROOTDISK"] = "1"  # use io2 disk on AWS
 
     if args.num_tasks >= 16:
-        assert (
-            args.simple_ring_setup
-        ), "must use --simple_ring_setup, otherwise NCCL_RINGS env var exceeds cmd-line limit"
+        if not args.simple_ring_setup:
+            raise ValueError("must use --simple_ring_setup, otherwise NCCL_RINGS env var exceeds cmd-line limit")
 
     job = ncluster.make_job(
         name=args.name,
@@ -344,7 +354,9 @@ def main():
         job.tasks[0].write(args.internal_config_fn, pickled_config)
 
     if args.mount_imagenet:
-        assert u.get_zone(), "Must specify zone when reusing EBS volumes"
+        if not u.get_zone():
+            assert ValueError("Must specify zone when reusing EBS volumes")
+
         mount_imagenet(job)
 
     if not args.skip_setup:
@@ -362,7 +374,9 @@ def main():
     job.rsync(".")
 
     if args.efa:
-        assert "efa" in args.image_name  # make sure we use EFA-enabled image
+        if "efa" not in args.image_name:
+            raise ValueError("make sure we use EFA-enabled image")
+
         hosts_str, hosts_file_str = util.setup_mpi(job, skip_ssh_setup=args.skip_setup)
         if not args.skip_setup:
             task0.write(HOSTS_SLOTS_FN, hosts_file_str)
@@ -375,7 +389,9 @@ def main():
 
     env_params += " OMP_NUM_THREADS=1 "
     if args.pytorch_use_spawn:
-        assert args.pytorch_nightly
+        if not args.pytorch_nightly:
+            raise ValueError()
+
         env_params += " PYTORCH_USE_SPAWN=1 "
     if "WANDB_API_KEY" in os.environ:
         env_params += f" WANDB_API_KEY={os.environ.get('WANDB_API_KEY')} "

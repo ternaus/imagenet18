@@ -9,8 +9,8 @@ class DDP(DistributedDataParallel):
         # DDP has a sync point on forward. No need to do this for eval. This allows us to have different batch sizes
         if self.training:
             return super().forward(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+
+        return self.module(*args, **kwargs)
 
     def load_state_dict(self, *args, **kwargs):
         self.module.load_state_dict(*args, **kwargs)

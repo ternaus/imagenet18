@@ -26,7 +26,8 @@ def split_bn_params(model, model_params, master_params):
             return module.parameters()
         accum = set()
         for child in module.children():
-            [accum.add(p) for p in get_bn_params(child)]
+            for p in get_bn_params(child):
+                accum.add(p)
         return accum
 
     mod_bn_params = get_bn_params(model)

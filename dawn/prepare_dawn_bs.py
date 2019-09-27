@@ -58,12 +58,11 @@ def datetime_from_seconds(seconds, timezone="US/Pacific"):
 
 def download_file(url):
     if url.lower().startswith("http"):
-        req = urllib.request.urlopen(url)
+        with urllib.request.urlopen(url) as response:
+            data = response.read()
+        return data
     else:
         raise ValueError from None
-
-    data = req.read()
-    return data
 
 
 def main():
